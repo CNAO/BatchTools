@@ -4,20 +4,21 @@
 
 # set env vars
 credFileName="myCredentials.sh" # contains myUserID and myUserPass vars (necessary only for download)
-FLUKAverLong=2025.1.1
+FLUKAverLong=2025.1.3
 FLUKAver=`echo ${FLUKAverLong} | cut -d\. -f1,2`
 # check your version against those available on the FLUKA website!
 #   choose the version on the web <= to yours
-# UBUNTU_20.04.1
-# GFORver=9.4  # gfortran --version
-# GLIBCver=2.17 # ldd --version
-GFORver=11.4  # gfortran --version
-GLIBCver=2.35 # ldd --version
+# # UBUNTU_24.04
+# GFORver=12.2  # gfortran --version
+# GLIBCver=2.37 # ldd --version
+# UBUNTU_26.04
+GFORver=15.2  # gfortran --version
+GLIBCver=2.42 # ldd --version
 lDownloadOnly=false
-lDownload=true
-lCopy=false
+lDownload=false
+lCopy=true
 lSCopy=false
-lClean=false
+lClean=true
 FLUKApath=FLUKA/INFN
 
 die() {
@@ -45,8 +46,9 @@ if ${lDownload} ; then
     wget --user ${myUserID} --password ${myUserPass} --no-check-certificate https://www.fluka.eu/Fluka/www/htmls/packages/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz
     wget --user ${myUserID} --password ${myUserPass} --no-check-certificate https://www.fluka.eu/Fluka/www/htmls/packages/fluka${FLUKAver}-data.tar.gz
 elif ${lCopy} ; then
-    cp /media/DATA/soft/FLUKA_${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
-    cp /media/DATA/soft/FLUKA_${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
+    echo "copying files..."
+    cp /mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
+    cp /mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
 elif ${lSCopy} ; then
     scp amereghe@192.168.1.100:/media/DATA/soft/FLUKA_${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
     scp amereghe@192.168.1.100:/media/DATA/soft/FLUKA_${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
