@@ -559,7 +559,7 @@ if ${lMerge} ; then
                 continue
         esac
         echo "checking presence of ${myScor} cards in ${inputFile} file..."
-        units=`grep ${myScor} ${inputFile} | grep -v -e DCYSCORE -e AUXSCORE | awk -v myCol=${myCol} '{un=-\$myCol; if (20<un && un<100) {print (un)}}' | sort -g | uniq`
+        units=`grep "^${myScor}" ${inputFile} | grep -v -e DCYSCORE -e AUXSCORE | awk -v myCol=${myCol} '{un=-\$myCol; if (20<un && un<100) {print (un)}}' | sort -g | uniq`
         if [[ "${units}" == "" ]] ; then
             echo "...no cards found!"
             continue
