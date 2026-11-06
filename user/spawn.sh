@@ -98,6 +98,7 @@ cat <<EOF
        -G  grep stat: to grep statistics on the jobs already over.
                       available options:
                       -c <caseDir>   (mandatory)
+		      -i <inputFile> (mandatory)
                       -u <myUnStats> (optional)
                       -w <where>     (optional)
 
@@ -296,7 +297,9 @@ if ${lPrepare} ; then
     if [ ! -d ${origDir} ] ; then die "folder with original files does NOT exist!" ; fi
 fi
 if ${lGrepStats} ; then
+    if [ -z "${inputFile}" ] ; then die ".inp file NOT declared!" ; fi
     if [ -z "${myUnStats}" ] ; then die "no unit for statistics!" ; fi
+    if [ ! -f ${inputFile} ] ; then die ".inp file does NOT exist!" ; fi
     if [ ! -d ${caseDir} ] ; then die "case folder does NOT exist!" ; fi
 fi
 if ${lSubmit} ; then
