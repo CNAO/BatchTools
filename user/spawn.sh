@@ -7,6 +7,7 @@ nPrims=""
 myUnStats=1E6
 origDir=.
 scorings="RESNUCLE,USRBIN,USRBDX,USRTRACK,USRYIELD"
+lMrgExist=false
 seedMin=0
 seedMax=9
 wherePST="run_%05i"
@@ -32,7 +33,7 @@ condorSubFile="condor.sub"
 # log file
 logFile=.`basename $0`.log
 # script version
-scriptVer="1.2"
+scriptVer="1.3"
 
 currDir=$PWD
 # use "." as floating-point separator
@@ -107,8 +108,11 @@ cat <<EOF
         example: /mnt/DATA/homeMadeBatchSys/${script_name} -H
 
        -M  merge:     to merge results saved in binary files.
+                      If you want to merge data onto existing merged files,
+                         please trigger the -g option
                       available options:
                       -c <caseDir>   (mandatory)
+                      -g             (optional)
 		      -i <inputFile> (mandatory)
                       -s <scorings>  (optional)
                       -w <where>     (optional)
@@ -162,6 +166,11 @@ cat <<EOF
        -c <caseDir>   sub-folder containing the study case
        	  	      --> NO defaults!
 
+       -g             when merging, do merge onto existing merged files;
+                      otherwise, existing merged files on the concerned unit
+                         will be overwritten.
+                      --> default: ${lMrgExist};
+
        -i <inputFile> FLUKA .inp file (with extenstion)
        	  	      --> NO defaults!
 
@@ -205,7 +214,7 @@ EOF
 # ==============================================================================
 
 # get options
-while getopts  ":a:b:Cc:EGHhi:j:Mm:n:o:Pp:Ss:Tu:w:" opt ; do
+while getopts  ":a:b:Cc:EgGHhi:j:Mm:n:o:Pp:Ss:Tu:w:" opt ; do
   case $opt in
     a)
       addFiles="${addFiles} $OPTARG"
@@ -221,6 +230,9 @@ while getopts  ":a:b:Cc:EGHhi:j:Mm:n:o:Pp:Ss:Tu:w:" opt ; do
       ;;
     E)
       lExpand=true
+      ;;
+    g)
+      lMrgExist=true
       ;;
     G)
       lGrepStats=true
@@ -559,7 +571,7 @@ if ${lMerge} ; then
                 continue
         esac
         echo "checking presence of ${myScor} cards in ${inputFile} file..."
-        units=`grep ${myScor} ${inputFile} | grep -v -e DCYSCORE -e AUXSCORE | awk -v myCol=${myCol} '{un=-\$myCol; if (20<un && un<100) {print (un)}}' | sort -g | uniq`
+        units=`grep "^${myScor}" ${inputFile} | grep -v -e DCYSCORE -e AUXSCORE | awk -v myCol=${myCol} '{un=-\$myCol; if (20<un && un<100) {print (un)}}' | sort -g | uniq`
         if [[ "${units}" == "" ]] ; then
             echo "...no cards found!"
             continue
@@ -572,11 +584,20 @@ if ${lMerge} ; then
                 if [ `wc -l ${myUnit}.txt | awk '{print ($1)}'` -eq 0 ] ; then
                     echo "...no ${whereGM}/*${myUnit} files found! No processing..."
                 else
+		    if [ -e ${inputFile%.inp}_${myUnit}.${extension} ] ; then
+			if ${lMrgExist} ; then
+			    mv ${inputFile%.inp}_${myUnit}.${extension} ${inputFile%.inp}_${myUnit}_bak.${extension}
+			    echo "${inputFile%.inp}_${myUnit}_bak.${extension}" >> ${myUnit}.txt
+			fi
+		    fi
                     echo "" >> ${myUnit}.txt
                     echo "${inputFile%.inp}_${myUnit}.${extension}" >> ${myUnit}.txt
                     ${FLUKA}/flutil/${exeMerge} < ${myUnit}.txt > ${myUnit}.log 2>&1
                 fi
-                rm ${myUnit}.*            
+                rm ${myUnit}.*
+		if ${lMrgExist} ; then
+		    rm ${inputFile%.inp}_${myUnit}_bak.${extension}
+		fi
             done
         fi
     done
