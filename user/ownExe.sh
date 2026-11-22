@@ -10,7 +10,7 @@ myMachines=(
 )
 makeCommand="
 cd ${ExeFolder}
-export FLUPRO=/usr/local/FLUKA/INFN/2025.1.4
+export FLUPRO=/usr/local/FLUKA/EU/2025.1.4
 export FLUKA=${FLUPRO}
 export FLUFOR=gfortran
 make clean
@@ -24,17 +24,33 @@ read -s -p "Enter the ssh password for all machines: " SSHPASS
 echo "" # just to add a newline after the invisible input
 export SSHPASS
 
+# keep track of IP address, to see if the current machine should be skipped or not
+myAddress=`hostname -I`
+localCompile=false
+
 echo "preparing FLUKA exe(s)..."
 for myMachine in ${myMachines[@]} ; do
     echo "...machine: ${myMachine};"
     echo "...user: ${USER};"
     echo "...path: ${ExeFolder};"
-    echo "   ...preparing folder (including cleaning existing files away)..."
-    sshpass -e ssh -o StrictHostKeyChecking=no ${USER}@${myMachine} "rm -rf ${ExeFolder}; mkdir -p ${ExeFolder}"
-    echo "   ...scp-ing source files..."
-    sshpass -e scp -r -o StrictHostKeyChecking=no ${ExeFolder}/* ${USER}@${myMachine}:${ExeFolder}
-    echo "   ...actually compiling..."
-    sshpass -e ssh -t -o StrictHostKeyChecking=no ${USER}@${myMachine} "${makeCommand}"
+    if [ "${myMachine}" == "${myAddress}" ] ; then
+        echo "...skipping this machine for local compilation (later)..."
+        localCompile=true
+    else
+        echo "   ...preparing folder (including cleaning existing files away)..."
+        sshpass -e ssh -o StrictHostKeyChecking=no ${USER}@${myMachine} "rm -rf ${ExeFolder}; mkdir -p ${ExeFolder}"
+        echo "   ...scp-ing source files..."
+        sshpass -e scp -r -o StrictHostKeyChecking=no ${ExeFolder}/* ${USER}@${myMachine}:${ExeFolder}
+        echo "   ...actually compiling..."
+        sshpass -e ssh -t -o StrictHostKeyChecking=no ${USER}@${myMachine} "${makeCommand}"
+    fi
 done
+
+if ${localCompile} ; then
+    echo "...local compilation:"
+    eval "${makeCommand}"
+else
+    echo "NO local compilation."
+fi
 
 echo "...done."
