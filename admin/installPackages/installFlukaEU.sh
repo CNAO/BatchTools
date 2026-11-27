@@ -4,25 +4,29 @@
 
 # set env vars
 credFileName="myCredentials.sh" # contains myUserID and myUserPass vars (necessary only for download)
+FLUKAdist=EU
 FLUKAverLong=2025.1.4
 FLUKAver=`echo ${FLUKAverLong} | cut -d\. -f1,2`
 GFORver=""
 GLIBCver=""
 # check your version against those available on the FLUKA website!
 #   choose the version on the web <= to yours
-# UBUNTU_24.04
-GFORver="${GFORver} 12.2"  # gfortran --version
-GLIBCver="${GLIBCver} 2.37" # ldd --version
-# UBUNTU_26.04
-GFORver="${GFORver} 15.2"  # gfortran --version
-GLIBCver="${GLIBCver} 2.42" # ldd --version
-iInstall=1
-lDownloadOnly=true
+# UBUNTU_20.04
+GFORver="${GFORver} 9.4"  # gfortran --version
+GLIBCver="${GLIBCver} 2.17" # ldd --version
+# # UBUNTU_24.04
+# GFORver="${GFORver} 12.2"  # gfortran --version
+# GLIBCver="${GLIBCver} 2.37" # ldd --version
+# # UBUNTU_26.04
+# GFORver="${GFORver} 15.2"  # gfortran --version
+# GLIBCver="${GLIBCver} 2.42" # ldd --version
+iInstall=0 # used for downloading many compiled versions of FLUKA but only one DB file
+lDownloadOnly=false
 lDownload=true
 lCopy=false
 lSCopy=false
 lClean=false
-FLUKApath=FLUKA/INFN
+FLUKApath=FLUKA/${FLUKAdist}
 #
 GFORver=( ${GFORver} )
 GLIBCver=( ${GLIBCver} )
@@ -55,17 +59,17 @@ if ${lDownload} ; then
     wget --user ${myUserID} --password ${myUserPass} --no-check-certificate https://www.fluka.eu/Fluka/www/htmls/packages/fluka${FLUKAver}-data.tar.gz
 elif ${lCopy} ; then
     echo "copying files..."
-    cp /mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
-    cp /mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
+    cp /mnt/san_data/soft/FLUKA/${FLUKAdist}/${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
+    cp /mnt/san_data/soft/FLUKA/${FLUKAdist}/${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
 elif ${lSCopy} ; then
-    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
-    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/FLUKA/INFN/${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
+    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/FLUKA/${FLUKAdist}/${FLUKAverLong}/fluka${FLUKAver}-linux-gfor64bit-${GFORver}-glibc${GLIBCver}-AA.tar.gz .
+    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/FLUKA/${FLUKAdist}/${FLUKAverLong}/fluka${FLUKAver}-data.tar.gz .
 fi
 if ${lDownloadOnly} ; then
     exit
 fi
 
-# create appropriate folder with downloaded material
+# untar material
 tar xvzf fluka${FLUKAver}-linux-gfor64bit-${GFORver[${iInstall}]}-glibc${GLIBCver[$iInstall]}-AA.tar.gz
 tar xvzf fluka${FLUKAver}-data.tar.gz
 
@@ -79,6 +83,7 @@ make ; $FLUPRO/flutil/ldpmqmd
 
 # make installation available for the linux group fluka
 chmod -R a+r .
+chmod -R o-rx .
 find . -type f -executable -exec chmod a+x {} \;
 find . -type d -exec chmod g+x {} \;
 cd ../../../

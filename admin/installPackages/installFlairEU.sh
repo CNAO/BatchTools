@@ -3,14 +3,14 @@
 # run as root!
 
 lDownload=false
-lCopy=false
-lSCopy=true
+lCopy=true
+lSCopy=false
 lClean=true
 
 FLAIRpath=flair
 flairVer=2.3-0g
 flairVerShort=`echo ${flairVer} | cut -d\- -f1`
-flairDist=INFN
+flairDist=EU
 pathT2bins="/usr/local/bin"
 flairBins=( fcalc fless fm pt )
 flairExes=( Calculator.py ViewerPage.py Manual.py PeriodicTable.py )
@@ -39,11 +39,11 @@ if ${lDownload} ; then
     wget --no-check-certificate https://www.fluka.eu/Fluka/www/htmls/flair/flair-${flairVer}py3.tgz
     wget --no-check-certificate https://www.fluka.eu/Fluka/www/htmls/flair/flair-geoviewer-${flairVer}py3.tgz
 elif ${lCopy} ; then
-    cp /mnt/san_data/soft/flair/INFN/flair-${flairVer}py3.tgz .
-    cp /mnt/san_data/soft/flair/INFN/flair-geoviewer-${flairVer}py3.tgz .
+    cp /mnt/san_data/soft/flair/${flairDist}/flair-${flairVer}py3.tgz .
+    cp /mnt/san_data/soft/flair/${flairDist}/flair-geoviewer-${flairVer}py3.tgz .
 elif ${lSCopy} ; then
-    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/flair/INFN/flair-${flairVer}py3.tgz .
-    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/flair/INFN/flair-geoviewer-${flairVer}py3.tgz .
+    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/flair/${flairDist}/flair-${flairVer}py3.tgz .
+    scp amereghe@svpvclus01.cnao.group:/mnt/san_data/soft/flair/${flairDist}/flair-geoviewer-${flairVer}py3.tgz .
 fi    
 
 # create appropriate folder with downloaded material
@@ -64,24 +64,21 @@ mv *.geoviewer geoviewer.so usrbin2dvh fonts ${flairDist}/flair-${flairVer}
 cd -
 
 # user binaries
-echo "regenerating ${pathT2bins}/flair ..."
-cat << EOF > ${pathT2bins}/flair
+echo "regenerating ${pathT2bins}/flair_${flairDist} ..."
+cat << EOF > ${pathT2bins}/flair_${flairDist}
 #!/usr/bin/sh
-flairDist=${flairDist}
-flairVer=${flairVer}
-"/usr/local/flair/\${flairDist}/flair-\${flairVer}/flair" \$*
+"/usr/local/flair/${flairDist}/flair-${flairVer}/flair" \$*
 EOF
-chmod +x ${pathT2bins}/flair
+chmod +x ${pathT2bins}/flair_${flairDist}
 for (( ii=0; ii<${#flairBins[@]}; ii++ )) ; do
-    echo "regenerating ${pathT2bins}/${flairBins[${ii}]} ..."
-    cat << EOF > ${pathT2bins}/${flairBins[${ii}]}
+    echo "regenerating ${pathT2bins}/${flairBins[${ii}]}_${flairDist} ..."
+    cat << EOF > ${pathT2bins}/${flairBins[${ii}]}_${flairDist}
 #!/usr/bin/sh
-flairDist=${flairDist}
-flairVer=${flairVer}
-DIR="/usr/local/flair/\${flairDist}/flair-\${flairVer}"
+DIR="/usr/local/flair/${flairDist}/flair-${flairVer}"
 PYTHONPATH=\${DIR}/lib python3 \${DIR}/${flairExes[${ii}]} \$*
 EOF
-    chmod +x ${pathT2bins}/${flairBins[${ii}]}
+    chmod +x ${pathT2bins}/${flairBins[${ii}]}_${flairDist}
+    chown -R root:fluka ${pathT2bins}/${flairBins[${ii}]}_${flairDist}
 done
 
 # make installation available for the linux group fluka
@@ -98,3 +95,4 @@ fi
 
 # fix permissions
 chmod -R a+r /usr/local/${FLAIRpath}
+chmod -R o-rx /usr/local/${FLAIRpath}
